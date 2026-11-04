@@ -1,18 +1,18 @@
 #ifndef RC_CANAIS_H
 #define RC_CANAIS_H
-// Timer1 1 us/tick. RBIF detecta bordas de RB7/RB6/RB5.
-// Variaveis de 16 bits precisam de copia atomica no main.
 volatile unsigned int ValorCanal1, ValorCanal2, ValorCanal3;
 unsigned int InicioCanal1, InicioCanal2, InicioCanal3;
 unsigned char EstadoAnteriorRC;
 volatile unsigned char NovosRC;
-volatile unsigned char Idade1, Idade2, Idade3; // ms, saturados em 255
-
+volatile unsigned char Idade1, Idade2, Idade3;
 unsigned int RC_Tempo() {
-    unsigned char hi, lo;
-    hi = TMR1H;
-    lo = TMR1L;
-    return ((unsigned int)hi << 8) | lo;
+    unsigned char hi1, hi2, lo;
+    do {
+        hi1 = TMR1H;
+        lo = TMR1L;
+        hi2 = TMR1H;
+    } while (hi1 != hi2);
+    return ((unsigned int)hi2 << 8) | lo;
 }
 void RC_Inicializar() {
     ValorCanal1 = 0; ValorCanal2 = 0; ValorCanal3 = 0;
@@ -20,7 +20,7 @@ void RC_Inicializar() {
     Idade1 = 255; Idade2 = 255; Idade3 = 255;
     T1CON = 0;
     TMR1H = 0; TMR1L = 0;
-    T1CON = 1; // Fosc/4, prescaler 1:1, Timer1 ON
+    T1CON = 1;
     EstadoAnteriorRC = PORTB & 0xE0;
     INTCON.RBIF = 0;
     INTCON.RBIE = 1;
@@ -32,7 +32,6 @@ void RC_Interrupcao() {
     mudou = estado ^ EstadoAnteriorRC;
     EstadoAnteriorRC = estado;
     agora = RC_Tempo();
-
     if (mudou & 0x80) {
         if (estado & 0x80) InicioCanal1 = agora;
         else {
