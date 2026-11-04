@@ -1,89 +1,85 @@
 #ifndef RC_CANAIS_H
 #define RC_CANAIS_H
 
-// Amostragem nominal: 100 us com Fosc=4 MHz.
-// Todos os dados de 16 bits sao copiados com GIE=0.
-// A rotina RC_Interrupcao() deve ser chamada pelo interrupt() do main.
+// PIC16F628A - Fosc 4 MHz - Timer1 = 1 tick/us
+// Tres valores independentes (6 bytes no total).
+volatile unsigned int ValorCanal1 = 0;
+volatile unsigned int ValorCanal2 = 0;
+volatile unsigned int ValorCanal3 = 0;
 
-volatile unsigned int RC_Ticks = 0;
-volatile unsigned int RC_Inicio[3];
-volatile unsigned int RC_Ultimo[3];
-volatile unsigned int RC_Largura[3];
-volatile unsigned char RC_Valido[3];
-volatile unsigned char RC_Anterior = 0;
+// Instantes das bordas de subida (6 bytes).
+volatile unsigned int InicioCanal1 = 0;
+volatile unsigned int InicioCanal2 = 0;
+volatile unsigned int InicioCanal3 = 0;
+volatile unsigned char EstadoAnteriorRC = 0;
+
+// Leitura do contador de 16 bits; usada somente na interrupcao.
+// Timer1 roda em modo temporizador interno (Fosc/4).
+unsigned int RC_Tempo() {
+    unsigned char h, l;
+    h = TMR1H;
+    l = TMR1L;
+    return ((unsigned int)h << 8) | l;
+}
 
 void RC_Inicializar() {
-    unsigned char i;
-    RC_Ticks = 0;
-    RC_Anterior = PORTB & 0xE0;
-    for (i = 0; i < 3; i++) {
-        RC_Inicio[i] = 0;
-        RC_Ultimo[i] = 0;
-        RC_Largura[i] = 0;
-        RC_Valido[i] = 0;
-    }
-
-    // TMR0 interno, prescaler 1:1 (PSA=1), Fosc/4=1 MHz
-    OPTION_REG = 0b10001000;
-    TMR0 = 156;            // 100 contagens por interrupcao
-    INTCON.T0IF = 0;
-    INTCON.T0IE = 1;
+    T1CON = 0x00;
+    TMR1H = 0;
+    TMR1L = 0;
+    T1CON = 0x01;          // Timer1 ON, clock interno, prescaler 1:1
+    EstadoAnteriorRC = PORTB & 0xE0;
+    INTCON.RBIF = 0;
+    INTCON.RBIE = 1;
     INTCON.GIE = 1;
 }
 
-// Executada a cada overflow de Timer0.
+// Chamar no interrupt() do programa principal quando RBIF = 1.
+// Detecta subida e descida, calcula largura com aritmetica modular
+// de 16 bits (funciona mesmo quando Timer1 passa de 65535 para 0).
 void RC_Interrupcao() {
-    unsigned char atual;
-    unsigned char mascara;
-    unsigned char i;
-    unsigned int duracao;
-
-    // Compensa parcialmente a latencia da interrupcao.
-    TMR0 = TMR0 + 156;
-    INTCON.T0IF = 0;
-    RC_Ticks++;
-
-    atual = PORTB & 0xE0;
-    mascara = 0x80;
-    for (i = 0; i < 3; i++) {
-        if ((atual & mascara) && !(RC_Anterior & mascara)) {
-            RC_Inicio[i] = RC_Ticks;
-        }
-        if (!(atual & mascara) && (RC_Anterior & mascara)) {
-            duracao = (unsigned int)(RC_Ticks - RC_Inicio[i]);
-            if ((duracao >= 8) && (duracao <= 22)) {
-                RC_Largura[i] = duracao;
-                RC_Ultimo[i] = RC_Ticks;
-                RC_Valido[i] = 1;
-            } else {
-                RC_Valido[i] = 0;
-            }
-        }
-        if ((unsigned int)(RC_Ticks - RC_Ultimo[i]) > 300)
-            RC_Valido[i] = 0;
-
-        mascara = mascara >> 1;
-    }
-    RC_Anterior = atual;
-}
-
-// Canal: 1, 2 ou 3. Retorna 0 se o sinal estiver ausente.
-// Retorno em us, quantizado em passos nominais de 100 us.
-unsigned int RC_LerCanal(unsigned char canal) {
+    unsigned char estado;
+    unsigned char alterados;
+    unsigned int agora;
     unsigned int largura;
-    unsigned char valido;
-    unsigned char gie;
-    unsigned char i;
 
-    if ((canal < 1) || (canal > 3)) return 0;
-    i = canal - 1;
-    gie = INTCON.GIE;
-    INTCON.GIE = 0;
-    largura = RC_Largura[i];
-    valido = RC_Valido[i];
-    if (gie) INTCON.GIE = 1;
+    estado = PORTB & 0xE0;  // Le PORTB para encerrar a condicao de mismatch
+    alterados = estado ^ EstadoAnteriorRC;
+    EstadoAnteriorRC = estado;
+    agora = RC_Tempo();
 
-    if (!valido) return 0;
-    return largura * 100;
+    if (alterados & 0x80) {
+        if (estado & 0x80) InicioCanal1 = agora;
+        else {
+            largura = (unsigned int)(agora - InicioCanal1);
+            if ((largura >= 900) && (largura <= 2100))
+                ValorCanal1 = largura;
+            else ValorCanal1 = 0;
+        }
+    }
+
+    if (alterados & 0x40) {
+        if (estado & 0x40) InicioCanal2 = agora;
+        else {
+            largura = (unsigned int)(agora - InicioCanal2);
+            if ((largura >= 900) && (largura <= 2100))
+                ValorCanal2 = largura;
+            else ValorCanal2 = 0;
+        }
+    }
+
+    if (alterados & 0x20) {
+        if (estado & 0x20) InicioCanal3 = agora;
+        else {
+            largura = (unsigned int)(agora - InicioCanal3);
+            if ((largura >= 900) && (largura <= 2100))
+                ValorCanal3 = largura;
+            else ValorCanal3 = 0;
+        }
+    }
+    INTCON.RBIF = 0;
 }
+
+// Para copiar um valor de 16 bits no main sem leitura interrompida:
+// desabilite GIE, copie ValorCanalN, restaure GIE.
+// Nesta primeira versao nao ha timeout por ausencia de pulsos.
 #endif
