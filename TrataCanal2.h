@@ -3,12 +3,14 @@
 unsigned char FreioAtivo;
 unsigned char CandidatoFreio;
 unsigned char ContadorFreio;
+
 void TrataCanal2_Iniciar() {
     FreioAtivo = 0;
     CandidatoFreio = 0;
     ContadorFreio = 0;
-    FreioPWM(PWM_SOLTO);
+    FreioPWM(0);
 }
+
 void TrataCanal2(unsigned int pulso, unsigned char novaLeitura) {
     unsigned char candidato;
     if (novaLeitura) {
@@ -16,7 +18,7 @@ void TrataCanal2(unsigned int pulso, unsigned char novaLeitura) {
         if (!FreioAtivo) {
             if (pulso > Max2) candidato = 1;
         } else {
-            if (pulso < (Media2 + Media2 / 33)) candidato = 0;
+            if (pulso < Limite2Soltar) candidato = 0;
         }
         if (candidato == FreioAtivo) {
             CandidatoFreio = candidato;
@@ -34,6 +36,7 @@ void TrataCanal2(unsigned int pulso, unsigned char novaLeitura) {
             }
         }
     }
-    FreioPWM(FreioAtivo ? PWM_ACIONADO : PWM_SOLTO);
+    if (FreioAtivo) FreioPWM(PWM_ACIONADO);
+    else FreioPWM(Programa == 0 ? 0 : 10);
 }
 #endif
