@@ -3,7 +3,7 @@
 
 // Versao reduzida: somente troca de programa pelo Canal 3.
 // Canal 3 NAO participa da calibracao.
-#define QTD_PROGRAMAS 3
+#define QTD_PROGRAMAS 4
 #define CH3_LIMIAR_ALTO_US 1500
 
 unsigned char Programa;
