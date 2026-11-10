@@ -8,6 +8,8 @@ unsigned char FaseSetas;
 unsigned char DirecaoSeta;  // 0=nenhuma, 1=esquerda, 2=direita
 unsigned char CandidatoSeta;
 unsigned char ContadorSeta;
+unsigned int TempoStrobo;
+unsigned char PassoStrobo;
 
 // PWM por software dos dois farois: Timer2 a 4 kHz,
 // 16 passos => 250 Hz. Duty 10 (escala 0..255) vira 1/16.
@@ -24,7 +26,7 @@ void FaroisPWM_Interrupcao() {
 void TrataCanal1_Programa() {
     if (Programa == 0) NivelPWMFarois = 0;
     else if (Programa == 1) NivelPWMFarois = 1;
-    else NivelPWMFarois = 16;
+    else if (Programa != 3) NivelPWMFarois = 16;
 }
 
 void TrataCanal1_Iniciar(unsigned int agora) {
@@ -35,6 +37,8 @@ void TrataCanal1_Iniciar(unsigned int agora) {
     DirecaoSeta = 0;
     CandidatoSeta = 0;
     ContadorSeta = 0;
+    PassoStrobo = 0;
+    TempoStrobo = agora;
     SetaEsquerda = 0;
     SetaDireita = 0;
 }
@@ -44,6 +48,22 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
     unsigned char candidato;
 
     TrataCanal1_Programa();
+
+    // Strobo 1: 10 pulsos (25 ms ON, 25 ms OFF), pausa de 150 ms.
+    // Sem delay; o Timer2 continua acionando as saidas dos farois.
+    if (Programa == 3) {
+        if ((unsigned int)(agora - TempoStrobo) >=
+            ((PassoStrobo == 20) ? 150 : 25)) {
+            TempoStrobo = agora;
+            PassoStrobo++;
+            if (PassoStrobo == 21) PassoStrobo = 0;
+        }
+        NivelPWMFarois = ((PassoStrobo < 20) &&
+                          !(PassoStrobo & 1)) ? 16 : 0;
+    } else {
+        PassoStrobo = 0;
+        TempoStrobo = agora;
+    }
 
     // Avaliar apenas uma vez por pulso RC recebido, nunca por giro do while.
     if (novaLeitura) {
@@ -81,7 +101,7 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
         }
     }
 
-    if (DirecaoSeta || Programa == 3) {
+    if (DirecaoSeta || Programa == 4) {
         if ((unsigned int)(agora - TempoSetas) >= 500) {
             TempoSetas = agora;
             FaseSetas = !FaseSetas;
@@ -90,7 +110,7 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
         FaseSetas = 0;
         TempoSetas = agora;
     }
-    SetaEsquerda = FaseSetas && ((DirecaoSeta == 1) || (Programa == 3));
-    SetaDireita = FaseSetas && ((DirecaoSeta == 2) || (Programa == 3));
+    SetaEsquerda = FaseSetas && ((DirecaoSeta == 1) || (Programa == 4));
+    SetaDireita = FaseSetas && ((DirecaoSeta == 2) || (Programa == 4));
 }
 #endif
