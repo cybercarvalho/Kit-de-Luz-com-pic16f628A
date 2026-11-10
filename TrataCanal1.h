@@ -80,18 +80,14 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
 
         if (candidato == DirecaoSeta) {
             ContadorSeta = 0;
-            CandidatoSeta = candidato;
         } else {
             if (candidato != CandidatoSeta) {
                 CandidatoSeta = candidato;
-                ContadorSeta = 1;
-            } else if (ContadorSeta < 3) {
-                ContadorSeta++;
+                ContadorSeta = 0;
             }
-            if (ContadorSeta >= 3) {
+            if (++ContadorSeta == 3) {
                 DirecaoSeta = candidato;
                 ContadorSeta = 0;
-                // Comecar piscada imediatamente ao confirmar comando.
                 if (DirecaoSeta) {
                     FaseSetas = 1;
                     TempoSetas = agora;
