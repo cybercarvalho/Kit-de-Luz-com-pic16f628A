@@ -8,6 +8,7 @@ unsigned char FaseSetas;
 unsigned char DirecaoSeta;  // 0=nenhuma, 1=esquerda, 2=direita
 unsigned char CandidatoSeta;
 unsigned char ContadorSeta;
+unsigned char ProgramaSetasAnterior;
 
 // PWM por software dos dois farois: Timer2 a 4 kHz,
 // 16 passos => 250 Hz. Duty 10 (escala 0..255) vira 1/16.
@@ -36,6 +37,7 @@ void TrataCanal1_Iniciar(unsigned int agora) {
     DirecaoSeta = 0;
     CandidatoSeta = 0;
     ContadorSeta = 0;
+    ProgramaSetasAnterior = Programa;
     SetaEsquerda = 0;
     SetaDireita = 0;
 }
@@ -45,6 +47,11 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
     unsigned char candidato;
 
     TrataCanal1_Programa();
+    if (Programa != ProgramaSetasAnterior) {
+        ProgramaSetasAnterior = Programa;
+        FaseSetas = (Programa == 6) ? 1 : 0;
+        TempoSetas = agora;
+    }
 
     // Avaliar apenas uma vez por pulso RC recebido, nunca por giro do while.
     if (novaLeitura) {
@@ -82,7 +89,8 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
         }
     }
 
-    if (DirecaoSeta && (Programa != 1) && (Programa != 3)) {
+    if ((Programa == 6) || (DirecaoSeta && (Programa != 1) &&
+        (Programa != 3) && (Programa != 5))) {
         if ((unsigned int)(agora - TempoSetas) >= 500) {
             TempoSetas = agora;
             FaseSetas = !FaseSetas;
@@ -91,10 +99,14 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
         FaseSetas = 0;
         TempoSetas = agora;
     }
-    // Programas 1 e 3: ambas as setas acesas continuamente.
-    if ((Programa == 1) || (Programa == 3)) {
+    // Programas 1, 3 e 5: setas acesas continuamente.
+    if ((Programa == 1) || (Programa == 3) || (Programa == 5)) {
         SetaEsquerda = 1;
         SetaDireita = 1;
+    } else if (Programa == 6) {
+        // Pisca-alerta: ambas as setas piscam juntas a cada 500 ms.
+        SetaEsquerda = FaseSetas;
+        SetaDireita = FaseSetas;
     } else {
         SetaEsquerda = FaseSetas && (DirecaoSeta == 1);
         SetaDireita = FaseSetas && (DirecaoSeta == 2);
