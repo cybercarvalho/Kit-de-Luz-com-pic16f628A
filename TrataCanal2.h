@@ -3,12 +3,14 @@
 unsigned char FreioAtivo;
 unsigned char CandidatoFreio;
 unsigned char ContadorFreio;
+
 void TrataCanal2_Iniciar() {
     FreioAtivo = 0;
     CandidatoFreio = 0;
     ContadorFreio = 0;
     FreioPWM(0);
 }
+
 void TrataCanal2(unsigned int pulso, unsigned char novaLeitura) {
     unsigned char candidato;
     if (novaLeitura) {
@@ -27,8 +29,8 @@ void TrataCanal2(unsigned int pulso, unsigned char novaLeitura) {
             if (candidato != CandidatoFreio) {
                 CandidatoFreio = candidato;
                 ContadorFreio = 1;
-            } else if (ContadorFreio < 3) {
-                ContadorFreio++;
+            } else {
+                if (ContadorFreio < 3) ContadorFreio++;
             }
             if (ContadorFreio >= 3) {
                 FreioAtivo = candidato;
