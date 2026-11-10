@@ -89,8 +89,7 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
         }
     }
 
-    if ((Programa == 6) || (DirecaoSeta && (Programa != 1) &&
-        (Programa != 3))) {
+    if ((Programa == 6) || DirecaoSeta) {
         if ((unsigned int)(agora - TempoSetas) >= 500) {
             TempoSetas = agora;
             FaseSetas = !FaseSetas;
@@ -99,12 +98,9 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
         FaseSetas = 0;
         TempoSetas = agora;
     }
-    // Programas 1 e 3: setas acesas continuamente.
-    if ((Programa == 1) || (Programa == 3)) {
-        SetaEsquerda = 1;
-        SetaDireita = 1;
-    } else if (Programa == 5) {
-        // Ambas acesas no neutro; comando pisca somente o lado indicado.
+    // Programas 1, 3 e 5: ambas acesas no neutro.
+    // Ao esterçar, somente a seta correspondente pisca.
+    if ((Programa == 1) || (Programa == 3) || (Programa == 5)) {
         SetaEsquerda = (DirecaoSeta == 1) ? FaseSetas : 1;
         SetaDireita = (DirecaoSeta == 2) ? FaseSetas : 1;
     } else if (Programa == 6) {
