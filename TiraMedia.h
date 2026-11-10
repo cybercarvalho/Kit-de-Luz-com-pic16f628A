@@ -40,11 +40,13 @@ void TiraMedia_Atualizar(unsigned char novos,
         margem = Media2 / 20;
         Max2 = Media2 + margem;
         Min2 = Media2 - margem;
+        // 10%: reutiliza o calculo de 5%, evitando divisao por 10.
+        // Diferenca maxima: 1 unidade de Timer1 (1 us).
+        Limite2Prog = Media2 + (margem << 1);
         Margem1Soltar = Media1 / 33;
         margem = Media2 / 33;
         Limite2SoltarInv = Media2 - margem;
         Limite2Soltar = Media2 + margem;
-        Limite2Prog = Media2 + Media2 / 10; // 10% so na programacao
         EstadoSistema = CONFIRMANDO;
     }
 }
