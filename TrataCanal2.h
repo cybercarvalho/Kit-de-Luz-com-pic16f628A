@@ -29,8 +29,8 @@ void TrataCanal2(unsigned int pulso, unsigned char novaLeitura) {
             if (candidato != CandidatoFreio) {
                 CandidatoFreio = candidato;
                 ContadorFreio = 1;
-            } else {
-                if (ContadorFreio < 3) ContadorFreio++;
+            } else if (ContadorFreio < 3) {
+                ContadorFreio++;
             }
             if (ContadorFreio >= 3) {
                 FreioAtivo = candidato;
