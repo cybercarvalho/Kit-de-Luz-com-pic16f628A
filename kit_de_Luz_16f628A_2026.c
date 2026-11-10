@@ -2,10 +2,23 @@
 #include "RC_Canais.h"
 #include "Freio_Setas.h"
 #include "TiraMedia.h"
+#include "EEPROM_Freio.h"
 #include "TrataCanal3.h"
 #include "TrataCanal1.h"
 #include "TrataCanal2.h"
 #include "FailSafe.h"
+
+void TrataCanal3_Sinalizar() {
+    unsigned char setas, farois;
+    setas = LuzProg & 1;
+    farois = (LuzProg >> 1) & 1;
+    NivelPWMFarois = farois ? 16 : 0;
+    SetaEsquerda = setas;
+    SetaDireita = setas;
+    Neon_BrakeLight = farois;
+    Re_Lanterna = farois;
+    FreioPWM(farois ? 255 : 0);
+}
 
 volatile unsigned int Milissegundos;
 
@@ -28,6 +41,7 @@ void interrupt() {
 void main() {
     unsigned int c1, c2, c3, agora;
     unsigned char novos, perdido;
+    unsigned char ModoProgAnterior = 0;
 
     ConfigurarPortas();
     Milissegundos = 0;
@@ -52,8 +66,9 @@ void main() {
         INTCON.GIE = 1;
 
         if (perdido) {
-            FaroisPWM(0);
+            NivelPWMFarois = 0;
             TrataCanal3_Cancelar(agora);
+            ModoProgAnterior = 0;
             FailSafe_Executar(agora);
             continue;
         }
@@ -67,10 +82,21 @@ void main() {
             TrataCanal1_Iniciar(agora);
             TrataCanal2_Iniciar();
             TrataCanal3_Cancelar(agora);
+            ModoProgAnterior = 0;
+            continue;
+        }
+        TrataCanal3(c3, c2, agora, novos & 2);
+        if (ModoProg || ModoProgAnterior) {
+            FreioAtivo = 0;
+            CandidatoFreio = 0;
+            ContadorFreio = 0;
+        }
+        ModoProgAnterior = ModoProg;
+        if (ModoProg) {
+            TrataCanal3_Sinalizar();
             continue;
         }
         TrataCanal1(c1, agora, novos & 1);
         TrataCanal2(c2, novos & 2);
-        TrataCanal3(c3, agora);
     }
 }
