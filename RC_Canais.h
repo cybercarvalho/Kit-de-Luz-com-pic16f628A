@@ -42,7 +42,7 @@ void RC_Interrupcao() {
         if (estado & 0x80) InicioCanal1 = agora;
         else {
             largura = agora - InicioCanal1;
-            if ((largura >= 900) && (largura <= 2100)) {
+            if ((unsigned int)(largura - 900) <= 1200) {
                 ValorCanal1 = largura; Idade1 = 0; NovosRC |= 1;
             }
         }
@@ -51,7 +51,7 @@ void RC_Interrupcao() {
         if (estado & 0x40) InicioCanal2 = agora;
         else {
             largura = agora - InicioCanal2;
-            if ((largura >= 900) && (largura <= 2100)) {
+            if ((unsigned int)(largura - 900) <= 1200) {
                 ValorCanal2 = largura; Idade2 = 0; NovosRC |= 2;
             }
         }
@@ -60,7 +60,7 @@ void RC_Interrupcao() {
         if (estado & 0x20) InicioCanal3 = agora;
         else {
             largura = agora - InicioCanal3;
-            if ((largura >= 900) && (largura <= 2100)) {
+            if ((unsigned int)(largura - 900) <= 1200) {
                 ValorCanal3 = largura; Idade3 = 0; NovosRC |= 4;
             }
         }

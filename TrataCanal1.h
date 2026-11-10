@@ -8,6 +8,8 @@ unsigned char FaseSetas;
 unsigned char DirecaoSeta;  // 0=nenhuma, 1=esquerda, 2=direita
 unsigned char CandidatoSeta;
 unsigned char ContadorSeta;
+unsigned char TempoStrobo;
+unsigned char PassoStrobo;
 
 // PWM por software dos dois farois: Timer2 a 4 kHz,
 // 16 passos => 250 Hz. Duty 10 (escala 0..255) vira 1/16.
@@ -22,9 +24,9 @@ void FaroisPWM_Interrupcao() {
 }
 
 void TrataCanal1_Programa() {
-    if (Programa == 0) NivelPWMFarois = 0;
-    else if (Programa == 1) NivelPWMFarois = 1;
-    else NivelPWMFarois = 16;
+    if (Programa != 3)
+        NivelPWMFarois = (Programa == 0) ? 0 :
+                         (Programa == 1) ? 1 : 16;
 }
 
 void TrataCanal1_Iniciar(unsigned int agora) {
@@ -35,6 +37,8 @@ void TrataCanal1_Iniciar(unsigned int agora) {
     DirecaoSeta = 0;
     CandidatoSeta = 0;
     ContadorSeta = 0;
+    PassoStrobo = 0;
+    TempoStrobo = (unsigned char)agora;
     SetaEsquerda = 0;
     SetaDireita = 0;
 }
@@ -45,8 +49,23 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
 
     TrataCanal1_Programa();
 
+    // Strobo 1: 10 piscadas de 25 ms ON / 25 ms OFF;
+    // depois 150 ms apagado. Relogio de 8 bits (modulo 256).
+    if (Programa == 3) {
+        if ((unsigned char)((unsigned char)agora - TempoStrobo) >=
+            (PassoStrobo == 20 ? 150 : 25)) {
+            TempoStrobo = (unsigned char)agora;
+            if (++PassoStrobo == 21) PassoStrobo = 0;
+        }
+        NivelPWMFarois = (PassoStrobo < 20 &&
+                          !(PassoStrobo & 1)) ? 16 : 0;
+    } else {
+        PassoStrobo = 0;
+        TempoStrobo = (unsigned char)agora;
+    }
+
     // Avaliar apenas uma vez por pulso RC recebido, nunca por giro do while.
-    if (novaLeitura) {
+    if (novaLeitura && Programa != 4) {
         candidato = DirecaoSeta;
 
         if (DirecaoSeta == 1) {
@@ -61,18 +80,14 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
 
         if (candidato == DirecaoSeta) {
             ContadorSeta = 0;
-            CandidatoSeta = candidato;
         } else {
             if (candidato != CandidatoSeta) {
                 CandidatoSeta = candidato;
-                ContadorSeta = 1;
-            } else if (ContadorSeta < 3) {
-                ContadorSeta++;
+                ContadorSeta = 0;
             }
-            if (ContadorSeta >= 3) {
+            if (++ContadorSeta == 3) {
                 DirecaoSeta = candidato;
                 ContadorSeta = 0;
-                // Comecar piscada imediatamente ao confirmar comando.
                 if (DirecaoSeta) {
                     FaseSetas = 1;
                     TempoSetas = agora;
@@ -81,16 +96,16 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
         }
     }
 
-    if (DirecaoSeta || Programa == 3) {
-        if ((unsigned int)(agora - TempoSetas) >= 500) {
-            TempoSetas = agora;
-            FaseSetas = !FaseSetas;
-        }
-    } else {
-        FaseSetas = 0;
+    if ((unsigned int)(agora - TempoSetas) >= 500) {
         TempoSetas = agora;
+        FaseSetas = !FaseSetas;
     }
-    SetaEsquerda = FaseSetas && ((DirecaoSeta == 1) || (Programa == 3));
-    SetaDireita = FaseSetas && ((DirecaoSeta == 2) || (Programa == 3));
+    if (Programa == 4) {
+        SetaEsquerda = FaseSetas;
+        SetaDireita = FaseSetas;
+    } else {
+        SetaEsquerda = FaseSetas && (DirecaoSeta == 1);
+        SetaDireita = FaseSetas && (DirecaoSeta == 2);
+    }
 }
 #endif

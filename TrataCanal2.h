@@ -23,16 +23,13 @@ void TrataCanal2(unsigned int pulso, unsigned char novaLeitura) {
                 (FreioInvertido && (pulso > Limite2SoltarInv))) candidato = 0;
         }
         if (candidato == FreioAtivo) {
-            CandidatoFreio = candidato;
             ContadorFreio = 0;
         } else {
             if (candidato != CandidatoFreio) {
                 CandidatoFreio = candidato;
-                ContadorFreio = 1;
-            } else if (ContadorFreio < 3) {
-                ContadorFreio++;
+                ContadorFreio = 0;
             }
-            if (ContadorFreio >= 3) {
+            if (++ContadorFreio == 3) {
                 FreioAtivo = candidato;
                 ContadorFreio = 0;
             }
