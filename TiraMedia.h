@@ -40,11 +40,11 @@ void TiraMedia_Atualizar(unsigned char novos,
         margem = Media2 / 20;
         Max2 = Media2 + margem;
         Min2 = Media2 - margem;
+        Limite2Prog = Media2 + (margem << 1);
         Margem1Soltar = Media1 / 33;
         margem = Media2 / 33;
         Limite2SoltarInv = Media2 - margem;
         Limite2Soltar = Media2 + margem;
-        Limite2Prog = Media2 + Media2 / 10; // 10% so na programacao
         EstadoSistema = CONFIRMANDO;
     }
 }
@@ -66,11 +66,7 @@ unsigned char TiraMedia_Confirmacao(unsigned int agora) {
         FreioPWM(PWM_SOLTO);
         Delay_ms(10);
     }
-    // Garantia final: todas as luzes apagadas apos o for.
-    SetaEsquerda = 0; SetaDireita = 0;
-    FarolDireito = 0; FarolEsquerdo = 0;
-    Neon_BrakeLight = 0; Re_Lanterna = 0;
-    FreioPWM(0);
+    // A ultima iteracao do loop ja deixou as luzes apagadas.
     EstadoSistema = NORMAL;
     return 1;
 }
