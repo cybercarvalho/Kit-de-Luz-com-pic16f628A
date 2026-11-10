@@ -87,7 +87,8 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
         }
     }
 
-    if (DirecaoSeta) {
+    // Programa 3: pisca-alerta, ambas as setas simultaneamente.
+    if (DirecaoSeta || Programa == 3) {
         if ((unsigned int)(agora - TempoSetas) >= 500) {
             TempoSetas = agora;
             FaseSetas = !FaseSetas;
@@ -96,7 +97,7 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
         FaseSetas = 0;
         TempoSetas = agora;
     }
-    SetaEsquerda = (DirecaoSeta == 1) && FaseSetas;
-    SetaDireita = (DirecaoSeta == 2) && FaseSetas;
+    SetaEsquerda = FaseSetas && ((DirecaoSeta == 1) || (Programa == 3));
+    SetaDireita = FaseSetas && ((DirecaoSeta == 2) || (Programa == 3));
 }
 #endif
