@@ -89,7 +89,7 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
         }
     }
 
-    if ((Programa == 6) || DirecaoSeta) {
+    if (Programa == 6 || DirecaoSeta) {
         if ((unsigned int)(agora - TempoSetas) >= 500) {
             TempoSetas = agora;
             FaseSetas = !FaseSetas;
@@ -98,18 +98,16 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
         FaseSetas = 0;
         TempoSetas = agora;
     }
-    // Programas 1, 3 e 5: ambas acesas no neutro.
-    // Ao esterçar, somente a seta correspondente pisca.
-    if ((Programa == 1) || (Programa == 3) || (Programa == 5)) {
-        SetaEsquerda = (DirecaoSeta == 1) ? FaseSetas : 1;
-        SetaDireita = (DirecaoSeta == 2) ? FaseSetas : 1;
-    } else if (Programa == 6) {
-        // Pisca-alerta: ambas as setas piscam juntas a cada 500 ms.
+    // Bit 0 identifica os programas 1, 3 e 5 (setas acesas).
+    // Programa 6: pisca-alerta. Demais: setas direcionais normais.
+    if (Programa == 6) {
         SetaEsquerda = FaseSetas;
         SetaDireita = FaseSetas;
     } else {
-        SetaEsquerda = FaseSetas && (DirecaoSeta == 1);
-        SetaDireita = FaseSetas && (DirecaoSeta == 2);
+        SetaEsquerda = ((Programa & 1) && (DirecaoSeta != 1)) ||
+                        (FaseSetas && (DirecaoSeta == 1));
+        SetaDireita = ((Programa & 1) && (DirecaoSeta != 2)) ||
+                       (FaseSetas && (DirecaoSeta == 2));
     }
 }
 #endif
