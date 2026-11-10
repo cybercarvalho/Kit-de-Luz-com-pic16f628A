@@ -8,7 +8,7 @@ unsigned char FaseSetas;
 unsigned char DirecaoSeta;  // 0=nenhuma, 1=esquerda, 2=direita
 unsigned char CandidatoSeta;
 unsigned char ContadorSeta;
-unsigned int TempoStrobo;
+unsigned char TempoStrobo;
 unsigned char PassoStrobo;
 
 // PWM por software dos dois farois: Timer2 a 4 kHz,
@@ -38,7 +38,7 @@ void TrataCanal1_Iniciar(unsigned int agora) {
     CandidatoSeta = 0;
     ContadorSeta = 0;
     PassoStrobo = 0;
-    TempoStrobo = agora;
+    TempoStrobo = (unsigned char)agora;
     SetaEsquerda = 0;
     SetaDireita = 0;
 }
@@ -49,22 +49,19 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
 
     TrataCanal1_Programa();
 
-    // Strobo 1: 10 pulsos (25 ms ON, 25 ms OFF), pausa de 150 ms.
-    // Sem delay; o Timer2 continua acionando as saidas dos farois.
+    // Strobo 1: 10 piscadas de 25 ms ON / 25 ms OFF;
+    // depois 150 ms apagado. Relogio de 8 bits (modulo 256).
     if (Programa == 3) {
-        if ((unsigned int)(agora - TempoStrobo) >= 25) {
-            if (PassoStrobo != 20 ||
-                (unsigned int)(agora - TempoStrobo) >= 150) {
-                TempoStrobo = agora;
-                PassoStrobo++;
-                if (PassoStrobo == 21) PassoStrobo = 0;
-            }
+        if ((unsigned char)((unsigned char)agora - TempoStrobo) >=
+            (PassoStrobo == 20 ? 150 : 25)) {
+            TempoStrobo = (unsigned char)agora;
+            if (++PassoStrobo == 21) PassoStrobo = 0;
         }
         NivelPWMFarois = (PassoStrobo < 20 &&
                           !(PassoStrobo & 1)) ? 16 : 0;
     } else {
         PassoStrobo = 0;
-        TempoStrobo = agora;
+        TempoStrobo = (unsigned char)agora;
     }
 
     // Avaliar apenas uma vez por pulso RC recebido, nunca por giro do while.
