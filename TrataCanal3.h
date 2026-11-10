@@ -10,16 +10,16 @@ unsigned char Programa;
 unsigned char Canal3Armado;
 unsigned char Canal3Pressionado;
 
+void ZeraEstados(); // Implementada em FuncoesGerais.h
+
 void TrataCanal3_Iniciar(unsigned int agora) {
     Programa = 0;
-    Canal3Armado = 0;
-    Canal3Pressionado = 0;
+    ZeraEstados();
 }
 
 void TrataCanal3_Cancelar(unsigned int agora) {
     // Nao altera Programa; exige voltar a chave para baixo.
-    Canal3Armado = 0;
-    Canal3Pressionado = 0;
+    ZeraEstados();
 }
 
 void TrataCanal3(unsigned int pulso, unsigned int agora) {
