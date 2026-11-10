@@ -3,6 +3,7 @@
 #include "Freio_Setas.h"
 #include "TiraMedia.h"
 #include "TrataCanal3.h"
+#include "FuncoesGerais.h"
 #include "TrataCanal1.h"
 #include "TrataCanal2.h"
 #include "FailSafe.h"
