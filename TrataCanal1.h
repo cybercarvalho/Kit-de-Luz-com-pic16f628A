@@ -14,12 +14,6 @@ unsigned char ContadorSeta;
 volatile unsigned char FasePWMFarois;
 volatile unsigned char NivelPWMFarois;
 
-void FaroisPWM(unsigned char duty) {
-    if (duty == 0) NivelPWMFarois = 0;
-    else if (duty == 255) NivelPWMFarois = 16;
-    else NivelPWMFarois = (duty >> 4) + ((duty & 15) >= 8);
-}
-
 void FaroisPWM_Interrupcao() {
     FasePWMFarois++;
     if (FasePWMFarois >= 16) FasePWMFarois = 0;
@@ -28,9 +22,9 @@ void FaroisPWM_Interrupcao() {
 }
 
 void TrataCanal1_Programa() {
-    if (Programa == 0) FaroisPWM(0);
-    else if (Programa == 1) FaroisPWM(10);
-    else FaroisPWM(255);
+    if (Programa == 0) NivelPWMFarois = 0;
+    else if (Programa == 1) NivelPWMFarois = 1;
+    else NivelPWMFarois = 16;
 }
 
 void TrataCanal1_Iniciar(unsigned int agora) {
@@ -87,7 +81,6 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
         }
     }
 
-    // Programa 3: pisca-alerta, ambas as setas simultaneamente.
     if (DirecaoSeta || Programa == 3) {
         if ((unsigned int)(agora - TempoSetas) >= 500) {
             TempoSetas = agora;
