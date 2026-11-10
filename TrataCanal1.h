@@ -24,9 +24,9 @@ void FaroisPWM_Interrupcao() {
 }
 
 void TrataCanal1_Programa() {
-    if (Programa == 0) NivelPWMFarois = 0;
-    else if (Programa == 1) NivelPWMFarois = 1;
-    else if (Programa != 3) NivelPWMFarois = 16;
+    if (Programa != 3)
+        NivelPWMFarois = (Programa == 0) ? 0 :
+                         (Programa == 1) ? 1 : 16;
 }
 
 void TrataCanal1_Iniciar(unsigned int agora) {
@@ -52,13 +52,15 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
     // Strobo 1: 10 pulsos (25 ms ON, 25 ms OFF), pausa de 150 ms.
     // Sem delay; o Timer2 continua acionando as saidas dos farois.
     if (Programa == 3) {
-        if ((unsigned int)(agora - TempoStrobo) >=
-            ((PassoStrobo == 20) ? 150 : 25)) {
-            TempoStrobo = agora;
-            PassoStrobo++;
-            if (PassoStrobo == 21) PassoStrobo = 0;
+        if ((unsigned int)(agora - TempoStrobo) >= 25) {
+            if (PassoStrobo != 20 ||
+                (unsigned int)(agora - TempoStrobo) >= 150) {
+                TempoStrobo = agora;
+                PassoStrobo++;
+                if (PassoStrobo == 21) PassoStrobo = 0;
+            }
         }
-        NivelPWMFarois = ((PassoStrobo < 20) &&
+        NivelPWMFarois = (PassoStrobo < 20 &&
                           !(PassoStrobo & 1)) ? 16 : 0;
     } else {
         PassoStrobo = 0;
@@ -101,16 +103,16 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
         }
     }
 
-    if (DirecaoSeta || Programa == 4) {
-        if ((unsigned int)(agora - TempoSetas) >= 500) {
-            TempoSetas = agora;
-            FaseSetas = !FaseSetas;
-        }
-    } else {
-        FaseSetas = 0;
+    if ((unsigned int)(agora - TempoSetas) >= 500) {
         TempoSetas = agora;
+        FaseSetas = !FaseSetas;
     }
-    SetaEsquerda = FaseSetas && ((DirecaoSeta == 1) || (Programa == 4));
-    SetaDireita = FaseSetas && ((DirecaoSeta == 2) || (Programa == 4));
+    if (Programa == 4) {
+        SetaEsquerda = FaseSetas;
+        SetaDireita = FaseSetas;
+    } else {
+        SetaEsquerda = FaseSetas && (DirecaoSeta == 1);
+        SetaDireita = FaseSetas && (DirecaoSeta == 2);
+    }
 }
 #endif
