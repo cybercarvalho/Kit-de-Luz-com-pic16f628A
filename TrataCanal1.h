@@ -22,8 +22,9 @@ void FaroisPWM_Interrupcao() {
 }
 
 void TrataCanal1_Programa() {
-    if (Programa == 0) NivelPWMFarois = 0;
-    else if (Programa == 1) NivelPWMFarois = 1;
+    // PWM de farois em 16 passos: 2/16 = 12,5% (aprox. 10%).
+    if (Programa <= 1) NivelPWMFarois = 0;
+    else if (Programa <= 3) NivelPWMFarois = 2;
     else NivelPWMFarois = 16;
 }
 
@@ -81,7 +82,7 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
         }
     }
 
-    if (DirecaoSeta || Programa == 3) {
+    if (DirecaoSeta && (Programa != 1) && (Programa != 3)) {
         if ((unsigned int)(agora - TempoSetas) >= 500) {
             TempoSetas = agora;
             FaseSetas = !FaseSetas;
@@ -90,7 +91,13 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
         FaseSetas = 0;
         TempoSetas = agora;
     }
-    SetaEsquerda = FaseSetas && ((DirecaoSeta == 1) || (Programa == 3));
-    SetaDireita = FaseSetas && ((DirecaoSeta == 2) || (Programa == 3));
+    // Programas 1 e 3: ambas as setas acesas continuamente.
+    if ((Programa == 1) || (Programa == 3)) {
+        SetaEsquerda = 1;
+        SetaDireita = 1;
+    } else {
+        SetaEsquerda = FaseSetas && (DirecaoSeta == 1);
+        SetaDireita = FaseSetas && (DirecaoSeta == 2);
+    }
 }
 #endif
