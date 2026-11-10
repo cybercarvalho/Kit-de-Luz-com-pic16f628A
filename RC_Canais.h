@@ -1,6 +1,7 @@
 #ifndef RC_CANAIS_H
 #define RC_CANAIS_H
 // Timer1 1 us/tick. RBIF detecta bordas de RB7/RB6/RB5.
+// Faixa valida 900..2100 us com uma comparacao unsigned por canal.
 // Variaveis de 16 bits precisam de copia atomica no main.
 volatile unsigned int ValorCanal1, ValorCanal2, ValorCanal3;
 unsigned int InicioCanal1, InicioCanal2, InicioCanal3;
@@ -42,7 +43,7 @@ void RC_Interrupcao() {
         if (estado & 0x80) InicioCanal1 = agora;
         else {
             largura = agora - InicioCanal1;
-            if ((largura >= 900) && (largura <= 2100)) {
+            if ((unsigned int)(largura - 900) <= 1200) {
                 ValorCanal1 = largura; Idade1 = 0; NovosRC |= 1;
             }
         }
@@ -51,7 +52,7 @@ void RC_Interrupcao() {
         if (estado & 0x40) InicioCanal2 = agora;
         else {
             largura = agora - InicioCanal2;
-            if ((largura >= 900) && (largura <= 2100)) {
+            if ((unsigned int)(largura - 900) <= 1200) {
                 ValorCanal2 = largura; Idade2 = 0; NovosRC |= 2;
             }
         }
@@ -60,7 +61,7 @@ void RC_Interrupcao() {
         if (estado & 0x20) InicioCanal3 = agora;
         else {
             largura = agora - InicioCanal3;
-            if ((largura >= 900) && (largura <= 2100)) {
+            if ((unsigned int)(largura - 900) <= 1200) {
                 ValorCanal3 = largura; Idade3 = 0; NovosRC |= 4;
             }
         }
