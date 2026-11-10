@@ -3,22 +3,22 @@
 unsigned char FreioAtivo;
 unsigned char CandidatoFreio;
 unsigned char ContadorFreio;
-
 void TrataCanal2_Iniciar() {
     FreioAtivo = 0;
     CandidatoFreio = 0;
     ContadorFreio = 0;
     FreioPWM(0);
 }
-
 void TrataCanal2(unsigned int pulso, unsigned char novaLeitura) {
     unsigned char candidato;
     if (novaLeitura) {
         candidato = FreioAtivo;
         if (!FreioAtivo) {
-            if (pulso > Max2) candidato = 1;
+            if ((!FreioInvertido && (pulso > Max2)) ||
+                (FreioInvertido && (pulso < Min2))) candidato = 1;
         } else {
-            if (pulso < Limite2Soltar) candidato = 0;
+            if ((!FreioInvertido && (pulso < Limite2Soltar)) ||
+                (FreioInvertido && (pulso > Limite2SoltarInv))) candidato = 0;
         }
         if (candidato == FreioAtivo) {
             CandidatoFreio = candidato;
