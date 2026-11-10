@@ -1,19 +1,25 @@
 #ifndef TIRAMEDIA_H
 #define TIRAMEDIA_H
+// Estado: 0=coleta, 1=flash, 2=normal, 3=failsafe
 #define CALIBRANDO 0
 #define CONFIRMANDO 1
 #define NORMAL 2
 #define FALHA_SINAL 3
+
 unsigned char EstadoSistema;
 unsigned char Amostras1, Amostras2;
 unsigned int Soma1, Soma2;
 unsigned int Media1, Media2;
 unsigned int Min1, Max1, Min2, Max2, Margem1Soltar, Limite2Soltar, Limite2SoltarInv, Limite2Prog;
+
 void TiraMedia_Iniciar() {
     Amostras1 = 0; Amostras2 = 0;
     Soma1 = 0; Soma2 = 0;
     EstadoSistema = CALIBRANDO;
 }
+
+// Chamado quando os canais 1 e 2 estiverem presentes.
+// A mascara "novos" indica pulsos completos desde a ultima leitura.
 void TiraMedia_Atualizar(unsigned char novos,
                         unsigned int c1, unsigned int c2,
                         unsigned int agora) {
@@ -38,10 +44,13 @@ void TiraMedia_Atualizar(unsigned char novos,
         margem = Media2 / 33;
         Limite2SoltarInv = Media2 - margem;
         Limite2Soltar = Media2 + margem;
-        Limite2Prog = Media2 + Media2 / 10;
+        Limite2Prog = Media2 + Media2 / 10; // 10% so na programacao
         EstadoSistema = CONFIRMANDO;
     }
 }
+
+// Confirmacao visual: 10 piscadas (10 ms aceso + 10 ms apagado).
+// Delay bloqueia o loop por ~200 ms; interrupcoes continuam habilitadas.
 unsigned char TiraMedia_Confirmacao(unsigned int agora) {
     unsigned char i;
     if (EstadoSistema != CONFIRMANDO) return 0;
@@ -57,6 +66,7 @@ unsigned char TiraMedia_Confirmacao(unsigned int agora) {
         FreioPWM(PWM_SOLTO);
         Delay_ms(10);
     }
+    // Garantia final: todas as luzes apagadas apos o for.
     SetaEsquerda = 0; SetaDireita = 0;
     FarolDireito = 0; FarolEsquerdo = 0;
     Neon_BrakeLight = 0; Re_Lanterna = 0;
