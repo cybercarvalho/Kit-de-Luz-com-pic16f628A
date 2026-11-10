@@ -39,6 +39,6 @@ void TrataCanal2(unsigned int pulso, unsigned char novaLeitura) {
         }
     }
     if (FreioAtivo) FreioPWM(PWM_ACIONADO);
-    else FreioPWM(Programa == 0 ? 0 : 10);
+    else FreioPWM(Programa <= 1 ? 0 : 26);
 }
 #endif
