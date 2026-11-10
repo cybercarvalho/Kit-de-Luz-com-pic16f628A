@@ -65,7 +65,7 @@ void TrataCanal1(unsigned int pulso, unsigned int agora,
     }
 
     // Avaliar apenas uma vez por pulso RC recebido, nunca por giro do while.
-    if (novaLeitura) {
+    if (novaLeitura && Programa != 4) {
         candidato = DirecaoSeta;
 
         if (DirecaoSeta == 1) {
