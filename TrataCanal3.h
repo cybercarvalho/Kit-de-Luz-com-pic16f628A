@@ -35,7 +35,7 @@ void TrataCanal3(unsigned int c3, unsigned int c2,
         // Pulso curto baixo-alto-baixo troca programa.
         if ((Ch3Estado == 2) && (ModoProg == 1)) {
             Programa++;
-            if (Programa == 5) Programa = 0;
+            if (Programa == 7) Programa = 0;
         }
         Ch3Estado = 1;
         ModoProg = 0;
